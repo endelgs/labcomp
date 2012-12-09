@@ -39,24 +39,27 @@ public class Compiler {
 
     return program;
   }
+  // OK
 
   private Program program() {
     // Program ::=  ClassDec { ClassDec }
     ArrayList<ClassDec> classDecs = new ArrayList<ClassDec>();
     classDecs.add(classDec());
     while (lexer.token == Symbol.CLASS) {
-      classDecs.add(classDec());
+      // mutreta do zeh. nao sei se funfa por causa da passagem por referencia
+      currentClass = classDec();
+      classDecs.add(currentClass);
     }
     return new Program(classDecs);
   }
-  // Constroi a ASA
+  // Constroi a AST
   // falta o tratamento de variaveis e metodos estaticos
 
   // OK
   private ClassDec classDec() {
-    // Note que os m�todos desta classe n�o correspondem exatamente �s regras
-    // da gram�tica. Este m�todo classDec, por exemplo, implementa
-    // a produ��o ClassDec (veja abaixo) e partes de outras produ��es.
+    // Note que os metodos desta classe nao correspondem exatamente as regras
+    // da gramatica. Este metodo classDec, por exemplo, implementa
+    // a producao ClassDec (veja abaixo) e partes de outras producoes.
 
     /* ClassDec ::=   ``class'' Id [ ``extends''  Id ]
      "{"   MemberList "}"
@@ -125,14 +128,14 @@ public class Compiler {
       lexer.nextToken();
       if (lexer.token == Symbol.LEFTPAR) {
         if (qualifier == Symbol.PUBLIC) {
-          classDec.getPublicMethodList().addElement(methodDec(t, name, qualifier,isStatic));
+          classDec.getPublicMethodList().addElement(methodDec(t, name, qualifier, isStatic));
         } else {
           classDec.getPrivateMethodList().addElement(methodDec(t, name, qualifier, isStatic));
         }
       } else if (qualifier != Symbol.PRIVATE) {
         error.show("Attempt to declare a public instance variable");
       } else { // faz a insercao direto na lista de variaveis 'por referencia'
-        instanceVarDec(t, name, classDec.getInstanceVariableList(),isStatic);
+        instanceVarDec(t, name, classDec.getInstanceVariableList(), isStatic);
       }
     }
     if (lexer.token != Symbol.RIGHTCURBRACKET) {
@@ -142,6 +145,7 @@ public class Compiler {
     return classDec;
   }
   // OK
+
   private void instanceVarDec(Type type, String name, InstanceVariableList instanceVariableList, boolean isStatic) {
     //   InstVarDec ::= [ "static"  ] "private"  Type  IdList  ";"
 
@@ -151,8 +155,8 @@ public class Compiler {
         error.show("Identifier expected");
       }
       String variableName = lexer.getStringValue();
-      instanceVariableList.addElement(new InstanceVariable(name, type,isStatic));
-         lexer.nextToken();
+      instanceVariableList.addElement(new InstanceVariable(name, type, isStatic));
+      lexer.nextToken();
     }
     if (lexer.token != Symbol.SEMICOLON) {
       error.show(CompilerError.semicolon_expected);
@@ -165,7 +169,7 @@ public class Compiler {
     /*   MethodDec ::= Qualifier ReturnType Id "("[ FormalParamDec ]  ")"
      "{"  StatementList "}"
      */
-    MethodDec methodDec = new MethodDec(name, type, qualifier,isStatic);
+    MethodDec methodDec = new MethodDec(name, type, qualifier, isStatic);
     lexer.nextToken();
     if (lexer.token != Symbol.RIGHTPAR) {
       methodDec.setParamList(formalParamDec());
@@ -189,10 +193,11 @@ public class Compiler {
     return methodDec;
   }
   // OK
+
   private LocalVarList localDec(Type type) {
     // LocalDec ::= Type IdList ";"
     LocalVarList localVarList = new LocalVarList();
-    
+
     if (lexer.token != Symbol.IDENT) {
       error.show("Identifier expected");
     }
@@ -209,6 +214,7 @@ public class Compiler {
     return localVarList;
   }
   // OK
+
   private ParamList formalParamDec() {
     //  FormalParamDec ::= ParamDec { "," ParamDec }
     ParamList paramList = new ParamList();
@@ -219,7 +225,7 @@ public class Compiler {
     }
     return paramList;
   }
-  
+
   // OK
   private Parameter paramDec() {
     // ParamDec ::= Type Id
@@ -230,7 +236,7 @@ public class Compiler {
     }
     String name = lexer.getStringValue();
     lexer.nextToken();
-    return new Parameter(name,type);
+    return new Parameter(name, type);
   }
 
   // OK
@@ -252,11 +258,12 @@ public class Compiler {
         result = Type.stringType;
         break;
       case IDENT:
-        //# corrija: fa�a uma busca na TS para buscar a classe
+        //# corrija: faca uma busca na TS para buscar a classe
         // corrigido!
         result = symbolTable.getInGlobal(lexer.getStringValue());
-        if(result == null)
-          error.show("Class "+lexer.getStringValue()+" doesn't exist");
+        if (result == null) {
+          error.show("Class " + lexer.getStringValue() + " doesn't exist");
+        }
         break;
       default:
         error.show("Type expected");
@@ -266,6 +273,7 @@ public class Compiler {
     return result;
   }
   // OK
+
   private CompositeStatement compositeStatement() {
 
     lexer.nextToken();
@@ -278,6 +286,7 @@ public class Compiler {
     return compositeStatement;
   }
   // OK
+
   private ArrayList<Statement> statementList() {
     // CompStatement ::= "{" { Statement } "}"
     Symbol tk;
@@ -289,6 +298,7 @@ public class Compiler {
     }
     return statementList;
   }
+  // OK
 
   private Statement statement() {
     /*
@@ -346,6 +356,7 @@ public class Compiler {
     return statement;
   }
   // OK
+
   private ExprList getRealParameters() {
     ExprList anExprList = null;
 
@@ -363,10 +374,11 @@ public class Compiler {
     return anExprList;
   }
   // OK
+
   private WhileStatement whileStatement() {
 
     WhileStatement whileStatement = new WhileStatement();
-    
+
     lexer.nextToken();
     if (lexer.token != Symbol.LEFTPAR) {
       error.show("( expected");
@@ -380,6 +392,7 @@ public class Compiler {
     whileStatement.setStatement(statement());
     return whileStatement;
   }
+  // OK
 
   private IfStatement ifStatement() {
     IfStatement ifStatement = new IfStatement();
@@ -401,6 +414,7 @@ public class Compiler {
     return ifStatement;
   }
   // OK
+
   private ReturnStatement returnStatement() {
     ReturnStatement returnStatement = new ReturnStatement();
     lexer.nextToken();
@@ -412,6 +426,7 @@ public class Compiler {
     return returnStatement;
   }
   // quaaase OK
+
   private ReadStatement readStatement() {
     ReadStatement readStatement = new ReadStatement();
     lexer.nextToken();
@@ -433,7 +448,7 @@ public class Compiler {
 
       String name = (String) lexer.getStringValue();
       readStatement.getVariableList().add(new Variable(name, Type.intType)); // precisa verificar esse intType depois
-      
+
       lexer.nextToken();
       if (lexer.token == Symbol.COMMA) {
         lexer.nextToken();
@@ -452,11 +467,11 @@ public class Compiler {
     lexer.nextToken();
     return readStatement;
   }
-
   // OK
+
   private WriteStatement writeStatement() {
     WriteStatement writeStatement = new WriteStatement();
-    
+
     lexer.nextToken();
     if (lexer.token != Symbol.LEFTPAR) {
       error.show("( expected");
@@ -473,6 +488,7 @@ public class Compiler {
     lexer.nextToken();
     return writeStatement;
   }
+  // OK
 
   private BreakStatement breakStatement() {
     BreakStatement breakStatement = new BreakStatement();
@@ -484,10 +500,12 @@ public class Compiler {
     return breakStatement;
   }
   // OK
+
   private NullStatement nullStatement() {
     lexer.nextToken();
     return new NullStatement();
   }
+  // OK
 
   private ExprList exprList() {
     // ExpressionList ::= Expression { "," Expression }
@@ -501,6 +519,7 @@ public class Compiler {
     }
     return anExprList;
   }
+  // OK
 
   private Expr expr() {
 
@@ -515,6 +534,7 @@ public class Compiler {
     }
     return left;
   }
+  // OK
 
   private Expr simpleExpr() {
     Symbol op;
@@ -528,6 +548,7 @@ public class Compiler {
     }
     return left;
   }
+  // OK
 
   private Expr term() {
     Symbol op;
@@ -541,6 +562,7 @@ public class Compiler {
     }
     return left;
   }
+  // OK
 
   private Expr signalFactor() {
     Symbol op;
@@ -567,7 +589,7 @@ public class Compiler {
     Expr e;
     Variable aVariable;
     ClassDec aClass;
-    //MethodDec aMethod;
+    MethodDec aMethod;
     InstanceVariable anInstanceVariable;
 
     switch (lexer.token) {
@@ -598,6 +620,7 @@ public class Compiler {
         return new NullExpr();
       case NUMBER:
         return number();
+      // se o operador for NEW, estou enviando um novo objeto
       case NEW:
         lexer.nextToken();
         if (lexer.token != Symbol.IDENT) {
@@ -609,8 +632,13 @@ public class Compiler {
          // encontre a classe className in symbol table
          ClassDec aClass = symbolTable.getInGlobal(className);
          if ( aClass == null ) ...
+         * // FEITO!
          */
-
+        aClass = symbolTable.getInGlobal(className);
+        // Mostra erro se tentar dar New em uma classe que não existe
+        if (aClass == null) {
+          error.show("Class " + className + " doesn't exist");
+        }
 
         lexer.nextToken();
         if (lexer.token != Symbol.LEFTPAR) {
@@ -625,8 +653,9 @@ public class Compiler {
          something as
          return new Cria_um_objeto(aClass);
          � importante n�o utilizar className, uma string e sim aClass, um objeto.
+         * // FEITO!
          */
-        return null;
+        return new ObjectCreation(aClass);
       default:
         String variableName,
          methodName;
@@ -645,6 +674,9 @@ public class Compiler {
          */
         switch (lexer.token) {
           case SUPER:
+            //MessageSendToSuper messageSendToSuper = new MessageSendToSuper();
+            className = currentClass.getName();
+
             // expression of the kind "super.m()"
             lexer.nextToken();
             if (lexer.token != Symbol.DOT) {
@@ -657,29 +689,40 @@ public class Compiler {
             methodName = lexer.getStringValue();
             lexer.nextToken();
             exprList = getRealParameters();
-            //#  corrija
-                  /*
-             deve existir uma vari�vel de inst�ncia currentClass.
-             aClass = currentClass.getSuperclass();
-             if ( aClass == null )
-             ...
-             aMethod = aClass.getMethod(methodName);
-             if ( aMethod == null )
-             ...
+            aClass = currentClass.getSuperclass();
+            if (aClass == null) {
+              error.show("Class " + className + " doesn't have a superclass");
+            }
+            aMethod = aClass.getMethod(methodName);
+            if (aMethod == null) {
+              error.show("Class " + className + " doesn't have a method called " + methodName);
+            }
 
-             return new MessageSendToSuper(
-             aClass, aMethod, exprList);
-             */
-            break;
+            return new MessageSendToSuper(aClass, aMethod, exprList);
+          //#  corrija
+                  /*
+           * CORRIGIDO!
+           deve existir uma variavel de instancia currentClass. 
+           aClass = currentClass.getSuperclass();
+           if ( aClass == null )
+           ...
+           aMethod = aClass.getMethod(methodName);
+           if ( aMethod == null )
+           ...
+
+           return new MessageSendToSuper(
+           aClass, aMethod, exprList);
+           */
           case THIS:
             lexer.nextToken();
             if (lexer.token != Symbol.DOT) {
               // expression of the kind "this"
+              error.show(". expected");
               //# corrija
                      /*
-               Verifique se n�o estamos em um m�todo est�tico
+               Verifique se nao estamos em um metodo estatico
                o construtor da classe ThisExpr deve tomar a classe corrente
-               como par�metro. Por qu� ?
+               como parametro. Por que ?
                return new ThisExpr(currentClass);
                */
             } else {
@@ -695,12 +738,33 @@ public class Compiler {
                   // expression of the kind "this.m()"
                   //# corrija
                   exprList = getRealParameters();
+                  aMethod = currentClass.getMethod(ident);
+                  if (aMethod == null) {
+                    error.show("Method " + ident + " doesn't exist");
+                  }
+
+                  // comparando o NUMERO de parametros passados vs. parametros 
+                  // que o metodo espera
+                  if (aMethod.getParamList().getSize() != exprList.getSize()) {
+                    error.show("Param count mismatch");
+                  }
+
+                  // comparando o TIPO dos parametros
+                  while(exprList.elements().hasNext()){
+                    Variable expParam = aMethod.getParamList().elements().next();
+                    Expr pasParam = exprList.elements().next();
+                    if(expParam.getType().getName() != pasParam.getType().getName())
+                      error.show("Type mismatch: '"+expParam.getType().getName()+"' expected. '"+pasParam.getType().getName()+"' given.");
+                  }
+                  
                   /*
-                   procure o m�todo ident na classe corrente:
+                   * FEITO!
+                   procure o metodo ident na classe corrente:
                    aMethod = currentClass.searchMethod(ident);
                    if ( aMethod == null )
                    ...
-                   confira se aMethod pode aceitar os par�metros de exprList.
+                   * 
+                   confira se aMethod pode aceitar os parametros de exprList.
                    return new MessageSendToSelf( aMethod, exprList );
                    */
                   break;
@@ -837,15 +901,15 @@ public class Compiler {
      ##########################################################################
      ##########################################################################
      IMPORTANTE:
-     a implementa��o deste m�todo � muit�ssimo parecido com o do m�todo
-     factor. Neste m�todo, factor, coloquei **muito** mais partes implementadas
-     do que neste m�todo assignmentMessageSendLocalVarDecStatement. A grande
-     diferen�a entre os dois m�todos � que factor analisa uma express�o e
-     assignmentMessageSendLocalVarDecStatement analisa uma instru��o. Isto �, um
+     a implementacao deste metodo e muitissimo parecido com o do metodo
+     factor. Neste metodo, factor, coloquei **muito** mais partes implementadas
+     do que neste metodo assignmentMessageSendLocalVarDecStatement. A grande
+     diferenca entre os dois metodos e que factor analisa uma expressao e
+     assignmentMessageSendLocalVarDecStatement analisa uma instrucao. Isto e, um
      envio de mensagem "x.m()" em factor deve retornar um valor e em
-     assignmentMessageSendLocalVarDecStatement n�o deve retornar nada.
-     Resumindo: fa�a factor primeiro e depois copie e cole grande parte do
-     que voc� fez para este m�todo.
+     assignmentMessageSendLocalVarDecStatement nao deve retornar nada.
+     Resumindo: faca factor primeiro e depois copie e cole grande parte do
+     que voce fez para este metodo.
 
      ##########################################################################
      ##########################################################################
@@ -992,8 +1056,8 @@ public class Compiler {
             || lexer.token == Symbol.LITERALSTRING;
 
   }
-  
   private SymbolTable symbolTable;
   private Lexer lexer;
   private CompilerError error;
+  private ClassDec currentClass;
 }

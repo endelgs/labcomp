@@ -37,6 +37,16 @@ public class ClassDec extends Type {
   public void setPrivateMethodList(MethodList privateMethodList) {
     this.privateMethodList = privateMethodList;
   }
+  public MethodDec getMethod(String name){
+    MethodDec methodDec;
+    while(publicMethodList.elements().hasNext()){
+       methodDec = publicMethodList.elements().next();
+      if(methodDec.getName() == name){
+        return methodDec;
+      }
+    }
+    return null;
+  }
   private String name;
   private ClassDec superclass;
   private InstanceVariableList instanceVariableList;

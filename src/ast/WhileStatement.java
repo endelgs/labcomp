@@ -10,7 +10,7 @@ import java.util.ArrayList;
  *
  *  @author endel
  */
-public class WhileStatement extends Statement{
+public class WhileStatement extends Statement {
 
   @Override
   public void genC(PW pw) {
